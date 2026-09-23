@@ -1,0 +1,44 @@
+---
+# Verify installed KBs
+
+- name: Get installed hotfixes
+  ansible.windows.win_shell: |
+    Get-HotFix | Select-Object HotFixID
+  register: installed_kbs
+
+- name: Display installed KBs
+  debug:
+    var: installed_kbs.stdout_lines
+
+# Verify reboot status
+
+- name: Verify reboot status
+  ansible.windows.win_shell: |
+    $rebootPending = Test-Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Component Based Servicing\RebootPending"
+
+    if ($rebootPending) {
+      Write-Output "REBOOT_REQUIRED"
+    }
+    else {
+      Write-Output "HEALTHY"
+    }
+  register: reboot_check
+
+- name: Display reboot status
+  debug:
+    msg: "Server Status: {{ reboot_check.stdout }}"
+
+# Verify WinRM connectivity
+
+- name: Connectivity validation
+  ansible.windows.win_ping
+
+# Patch Summary
+
+- name: Patch Summary
+  debug:
+    msg:
+      - "Server: {{ inventory_hostname }}"
+      - "Updates Installed: {{ update_result.installed_update_count | default(0) }}"
+      - "Reboot Required: {{ update_result.reboot_required | default(false) }}"
+      - "Final Status: {{ reboot_check.stdout }}"
