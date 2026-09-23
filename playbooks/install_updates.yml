@@ -1,0 +1,17 @@
+---
+- name: Enterprise Windows Patching
+  hosts: windows
+  gather_facts: yes
+
+  tasks:
+
+    - include_tasks: check_reboot.yml
+
+    - name: Install Security Updates
+      ansible.windows.win_updates:
+        category_names:
+          - SecurityUpdates
+        reboot: true
+      register: update_result
+
+    - include_tasks: validate.yml
