@@ -24,21 +24,16 @@
     }
   register: reboot_check
 
-- name: Display reboot status
-  debug:
-    msg: "Server Status: {{ reboot_check.stdout }}"
-
-# Verify WinRM connectivity
-
 - name: Connectivity validation
   ansible.windows.win_ping
 
-# Patch Summary
+# Deployment Summary
 
-- name: Patch Summary
+- name: Deployment Summary
   debug:
     msg:
-      - "Server: {{ inventory_hostname }}"
+      - "Host: {{ inventory_hostname }}"
+      - "Updates Found: {{ scan_result.found_update_count | default(0) }}"
       - "Updates Installed: {{ update_result.installed_update_count | default(0) }}"
       - "Reboot Required: {{ update_result.reboot_required | default(false) }}"
-      - "Final Status: {{ reboot_check.stdout }}"
+      - "System Status: {{ reboot_check.stdout }}"
