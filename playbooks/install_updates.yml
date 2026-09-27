@@ -19,7 +19,7 @@
       debug:
         msg: "Updates Found: {{ scan_result.found_update_count }}"
 
-    - name: Install Security Updates
+    - name: Install Security Updates and Critical Updates
       ansible.windows.win_updates:
         category_names:
           - SecurityUpdates
