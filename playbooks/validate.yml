@@ -1,30 +1,39 @@
 ---
-- name: Enterprise Windows Patching
-  hosts: windows
-  gather_facts: yes
+# Verify installed KBs
 
-  tasks:
+- name: Get installed hotfixes
+  ansible.windows.win_shell: |
+    Get-HotFix | Select-Object HotFixID
+  register: installed_kbs
 
-    - include_tasks: check_reboot.yml
+- name: Display installed KBs
+  debug:
+    var: installed_kbs.stdout_lines
 
-    - name: Scan Available Updates
-      ansible.windows.win_updates:
-        category_names:
-          - SecurityUpdates
-          - CriticalUpdates
-        state: searched
-      register: scan_result
+# Verify reboot status
 
-    - name: Display Available Updates
-      debug:
-        msg: "Updates Found: {{ scan_result.found_update_count }}"
+- name: Verify reboot status
+  ansible.windows.win_shell: |
+    $rebootPending = Test-Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Component Based Servicing\RebootPending"
 
-    - name: Install Security Updates
-      ansible.windows.win_updates:
-        category_names:
-          - SecurityUpdates
-          - CriticalUpdates
-        reboot: true
-      register: update_result
+    if ($rebootPending) {
+      Write-Output "REBOOT_REQUIRED"
+    }
+    else {
+      Write-Output "HEALTHY"
+    }
+  register: reboot_check
 
-    - include_tasks: validate.yml
+- name: Connectivity validation
+  ansible.windows.win_ping:
+
+# Deployment Summary
+
+- name: Deployment Summary
+  debug:
+    msg:
+      - "Host: {{ inventory_hostname }}"
+      - "Updates Found: {{ scan_result.found_update_count | default(0) }}"
+      - "Updates Installed: {{ update_result.installed_update_count | default(0) }}"
+      - "Reboot Required: {{ update_result.reboot_required | default(false) }}"
+      - "System Status: {{ reboot_check.stdout }}"
