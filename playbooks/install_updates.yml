@@ -7,6 +7,18 @@
 
     - include_tasks: check_reboot.yml
 
+    - name: Scan Available Updates
+      ansible.windows.win_updates:
+        category_names:
+          - SecurityUpdates
+          - CriticalUpdates
+        state: searched
+      register: scan_result
+
+    - name: Display Available Updates
+      debug:
+        msg: "Updates Found: {{ scan_result.found_update_count }}"
+
     - name: Install Security Updates
       ansible.windows.win_updates:
         category_names:
